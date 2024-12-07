@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  flask:
+    build:
+      context: ./flask
+    container_name: flask-service
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - /tmp/captures:/app/captures
+    environment:
+      - FLASK_ENV=production
+  react-ui:
+    build:
+      context: ./react-ui
+    container_name: react-ui
+    environment:
+      - REACT_APP_API_HOST=http://otic-kvm-02.colosseum.net
+    ports:
+      - "8080:80"
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /tmp/captures:/usr/share/nginx/html/captures:ro
+
