@@ -16,7 +16,7 @@ COPY app.py /app/app.py
 RUN mkdir -p /app/captures
 
 # Install Python dependencies
-RUN pip install flask flask-cors
+RUN pip install flask flask-cors flask-socketio eventlet
 
 # Expose the port the app runs on
 EXPOSE 5000

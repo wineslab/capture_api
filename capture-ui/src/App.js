@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { io } from "socket.io-client";
 
 const App = () => {
   const [interfaceName, setInterfaceName] = useState("");
@@ -7,6 +8,35 @@ const App = () => {
   const [captureLink, setCaptureLink] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showDialog, setShowDialog] = useState(false);
+  const [packetsInfo, setPacketsInfo] = useState(null);
+
+
+  useEffect(() => {
+      const socket = io(`ws://${process.env.REACT_APP_API_HOST}`, {
+        transports: ["websocket"], // Ensure WebSocket transport is used
+      });
+  
+      socket.on("connect", () => {
+        console.log("Connected to WebSocket server");
+      });
+  
+      socket.on("disconnect", () => {
+        console.log("Disconnected from WebSocket server");
+      });
+  
+      socket.on("capture_completed", (data) => {
+        console.log("Received event:", data);
+        setCaptureLink(data.file);
+        setPacketsInfo(data.packets_info); // Set packets info from the WebSocket message
+        setShowDialog(true); // Open the dialog
+        setLoading(false); // Stop the loading spinner
+      });
+
+    return () => {
+      socket.close(); // Cleanup on component unmount
+    };
+  }, []);
 
   const handleCapture = async () => {
     setLoading(true);
@@ -14,7 +44,7 @@ const App = () => {
     setError("");
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_HOST}/capture`, {
+      const response = await axios.post(`http://${process.env.REACT_APP_API_HOST}/capture`, {
             interface: interfaceName,
             duration,
       });
@@ -60,14 +90,39 @@ const App = () => {
 
       {error && <p style={styles.error}>{error}</p>}
 
-      {captureLink && (
+      {/* {captureLink && (
         <div style={styles.result}>
           <p>Capture complete! Download your file:</p>
-          <a href={`http://<API_HOST>${captureLink}`} download style={styles.link}>
+          <a href={`${process.env.REACT_APP_API_HOST}${captureLink}`} download style={styles.link}>
             Download Capture
           </a>
         </div>
+      )} */}
+
+      {captureLink && showDialog && (
+        <div style={styles.dialog}>
+          <h2>Capture Complete!</h2>
+          <p>File is ready for download:</p>
+          <a
+            href={`http://${process.env.REACT_APP_API_HOST}${captureLink}`}
+            download
+            style={styles.link}
+          >
+            Download Capture
+          </a>
+          {packetsInfo && (
+            <div style={styles.packetsInfo}>
+              <p>Packets Captured: {packetsInfo.packets_captured}</p>
+              <p>Packets Received: {packetsInfo.packets_received}</p>
+              <p>Packets Dropped: {packetsInfo.packets_dropped}</p>
+            </div>
+          )}
+          <button style={styles.button} onClick={() => setShowDialog(false)}>
+            Close
+          </button>
+        </div>
       )}
+
     </div>
   );
 };
