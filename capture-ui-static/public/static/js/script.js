@@ -2,7 +2,7 @@ var socket = io.connect("http://" + document.domain + ":" + location.port);
 
 // Fetch the configured Switch IP from the backend
 function fetchSwitchIP() {
-    fetch("/get_switch_ip")
+    fetch("/api/get_switch_ip")
         .then(response => response.json())
         .then(data => {
             document.getElementById("switchIP").textContent = data.switch_ip || "Not Configured";
@@ -19,7 +19,7 @@ document.getElementById("fetchInterfaces").addEventListener("click", function() 
     fetchButton.disabled = true;
     loadingMessage.style.display = "block";
 
-    fetch("/get_interfaces", {
+    fetch("/api/get_interfaces", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
     })
@@ -84,7 +84,7 @@ document.getElementById("monitorForm").addEventListener("submit", function(event
         return;
     }
 
-    fetch("/configure_monitor", {
+    fetch("/api/configure_monitor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ new_source: newSource })
@@ -111,7 +111,7 @@ document.getElementById("captureForm").addEventListener("submit", function(event
     var interface = document.getElementById("interface").value;
     var captureCommandDisplay = document.getElementById("captureCommand");
 
-    fetch("/capture", {
+    fetch("/api/capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ interface: interface })
@@ -132,7 +132,7 @@ document.getElementById("captureForm").addEventListener("submit", function(event
 
 // Handle stopping packet capture
 document.getElementById("stopCapture").addEventListener("click", function() {
-    fetch("/stop_capture", {
+    fetch("/api/stop_capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" }
     })

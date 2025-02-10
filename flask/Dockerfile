@@ -9,14 +9,15 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
+COPY requirements.txt /app/requirements.txt
+
+RUN pip3 install -r /app/requirements.txt
+
 # Copy application code
 COPY app.py /app/app.py
 
 # Create directory for captures
 RUN mkdir -p /app/captures
-
-# Install Python dependencies
-RUN pip install flask flask-cors flask-socketio eventlet
 
 # Expose the port the app runs on
 EXPOSE 5000

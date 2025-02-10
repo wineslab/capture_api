@@ -12,14 +12,14 @@ services:
     volumes:
       - /tmp/captures:/app/captures
     environment:
-      - FLASK_ENV=production
-      - SWITCH_IP=10.101.1.2
+      #- FLASK_ENV=production
+      - SWITCH_IP=10.112.0.2
       - SWITCH_USERNAME=opsmon
       - SWITCH_PASSWORD=0p@M0n*tor
   capture-ui:
     build:
-      context: ./capture-ui
-    container_name: capture-ui
+      context: ./capture-ui-static
+    container_name: capture-ui-static
     environment:
       - REACT_APP_API_HOST=otic-kvm-02.colosseum.net
     ports:

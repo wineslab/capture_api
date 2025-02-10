@@ -35,7 +35,7 @@ print(f"Using Switch IP: {switch_ip}")
 print(f"Using Username: {username}")
 
 
-@app.route("/get_switch_ip", methods=["GET"])
+@app.route("/api/get_switch_ip", methods=["GET"])
 def get_switch_ip():
     """Returns the configured Switch IP from environment variables."""
     switch_ip = os.getenv("SWITCH_IP", "Not Configured")
@@ -113,7 +113,7 @@ def configure_monitor_session(new_source):
     except Exception as e:
         return {"error": str(e)}
 
-@app.route("/configure_monitor", methods=["POST"])
+@app.route("/api/configure_monitor", methods=["POST"])
 def configure_monitor():
     data = request.json
     new_source = data.get("new_source")
@@ -182,7 +182,7 @@ def get_interface_status():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-@app.route("/get_interfaces", methods=["POST"])
+@app.route("/api/get_interfaces", methods=["POST"])
 def get_interfaces():
     """
     API to retrieve network interface statuses.
@@ -190,10 +190,6 @@ def get_interfaces():
     print(f"Fetching interfaces for Switch IP: {os.getenv('SWITCH_IP')}")
 
     return get_interface_status()
-
-@app.route("/", methods=["GET", "POST"])
-def home():
-    return render_template("index.html")
 
 # ----------------------- TCPDUMP PACKET CAPTURE -----------------------
 
@@ -226,7 +222,7 @@ def parse_tcpdump_output(output):
             info["packets_dropped"] = int(line.split()[0])
     return info
 
-@app.route("/capture", methods=["POST"])
+@app.route("/api/capture", methods=["POST"])
 def start_capture():
     global capture_process
     try:
@@ -243,7 +239,7 @@ def start_capture():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/stop_capture", methods=["POST"])
+@app.route("/api/stop_capture", methods=["POST"])
 def stop_capture():
     global capture_process
     if capture_process:
@@ -252,7 +248,7 @@ def stop_capture():
         return jsonify({"message": "Capture stopped successfully."}), 200
     return jsonify({"error": "No active capture to stop."}), 400
 
-@app.route("/download_capture/<filename>")
+@app.route("/api/download_capture/<filename>")
 def download_capture(filename):
     file_path = os.path.join(CAPTURE_DIR, filename)
     if os.path.exists(file_path):
@@ -260,5 +256,5 @@ def download_capture(filename):
     return jsonify({"error": "File not found"}), 404
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=5001)
+    socketio.run(app, host="0.0.0.0", port=5001, allow_unsafe_werkzeug=True)
 

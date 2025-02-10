@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . .
 
 # Copy built React app to Nginx static directory
-COPY /app/public /usr/share/nginx/html/frontend
+COPY /public /usr/share/nginx/html/frontend
 
 COPY nginx.conf /etc/nginx/nginx.conf
 
