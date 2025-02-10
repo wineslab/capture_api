@@ -13,6 +13,9 @@ services:
       - /tmp/captures:/app/captures
     environment:
       - FLASK_ENV=production
+      - SWITCH_IP=10.101.1.2
+      - SWITCH_USERNAME=opsmon
+      - SWITCH_PASSWORD=0p@M0n*tor
   capture-ui:
     build:
       context: ./capture-ui

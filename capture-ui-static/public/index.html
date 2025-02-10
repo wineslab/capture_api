@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Interface & Packet Capture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            cursor: pointer; /* Allows clicking on rows */
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+        }
+        .capture-result, .status-message {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            text-align: center;
+            display: none;
+        }
+        .loading {
+            display: none;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ff6600;
+        }
+        .selected {
+            background-color: #b3e5fc !important; /* Highlight selected row */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Network Interface & Monitor Session</h1>
+        <div class="fetch-section">
+            <p class="typo-message" style="text-align: center; font-weight: bold; color: red;">
+                Displaying the interface status for the switch located in Boston.
+            </p>
+            <button id="fetchInterfaces">Fetch Interfaces</button>
+            <p class="loading" id="loadingMessage" style="display: none;">
+                Fetching interfaces for Switch IP: <span id="switchIP"></span>... Please wait.
+            </p>
+        </div>
+        
+        <style>
+            .fetch-section {
+                text-align: center;
+                margin: 20px 0;
+            }
+        </style>
+        
+        <!-- Form to enter switch credentials -->
+        <p class="loading" id="loadingMessage" style="display: none;">
+            Fetching interfaces for Switch IP: <span id="switchIP"></span>...</p>
+
+        <!-- Monitor Session Configuration -->
+        <h2>Configure Monitor Session</h2>
+        <form id="monitorForm">
+            <label for="new_source">New Source Interface:</label>
+            <input type="text" id="new_source" name="new_source" readonly placeholder="Click on a port below">
+
+            <button type="submit">Configure Monitor</button>
+        </form>
+
+        <div class="status-message" id="monitorMessage"></div>
+
+        <h1>Network Interface & Packet Capture</h1>
+
+        <!-- Packet Capture Section -->
+        <h2>Start Packet Capture</h2>
+        <form id="captureForm">
+            <label for="interface">Interface:</label>
+            <input type="text" id="interface" name="interface" required placeholder="e.g., ens3f0">
+
+            <button type="submit">Start Capture</button>
+            <button type="button" id="stopCapture" style="display:none;">Stop Capture</button>
+        </form>
+
+        <!-- Interface Status Table -->
+        <div id="interfaceContainer" style="display:none;">
+            <h2>Click a Port to Select as New Source</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Port</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Speed</th>
+                        <th>Duplex</th>
+                        <th>Mode</th>
+                        <th>VLAN</th>
+                        <th>Tagged VLANs</th>
+                    </tr>
+                </thead>
+                <tbody id="interfaceTableBody">
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="container">
+            <h2>Capture Command</h2>
+            <p id="captureCommand" style="font-weight: bold; color: #007bff; text-align: center; display: none;"></p>
+        </div>
+        
+    </div>
+    <button id="downloadCapture" style="display:none;">Download Capture</button>
+    
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script> 
+</body>
+</html>
