@@ -106,21 +106,18 @@ document.getElementById("monitorForm").addEventListener("submit", function(event
 
 // Handle starting packet capture
 document.getElementById("captureForm").addEventListener("submit", function(event) {
-    event.preventDefault();
+    event.preventDefault(); 
 
     var interface = document.getElementById("interface").value;
     var captureCommandDisplay = document.getElementById("captureCommand");
-
     var url = `/sysmaster/capture_start?interface=${encodeURIComponent(interface)}`;
-
-    console.log("Fetching from URL:", url); // ✅ Log request URL
+    console.log("Fetching from URL:", url); // Log request URL
 
     fetch(url, { method: "GET" })
     .then(response => {
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
-
         // Ensure it's JSON
         if (response.headers.get("content-type")?.includes("application/json")) {
             return response.json();
@@ -132,6 +129,9 @@ document.getElementById("captureForm").addEventListener("submit", function(event
         console.log("Received JSON:", data);  //Log JSON response
         alert(data.message);
 
+        var filename = data.file.replace(/^.*[\\/]/, ""); 
+        console.log("Setting download button data-file to:", filename);
+        
         socket.emit("capture_started", { interface: interface });
         document.getElementById("downloadCapture").setAttribute("data-file", data.file);
         document.getElementById("downloadCapture").style.display = "block";
@@ -163,12 +163,39 @@ socket.on("capture_completed", function(data) {
 });
 
 // Handle download
+//document.getElementById("downloadCapture").addEventListener("click", function() {
+  //  var filename = this.getAttribute("data-file");
+    //if (filename) {
+      //  window.location.href = "/api/download_capture/" + filename.split("/").pop();
+    //}
+//});
+
 document.getElementById("downloadCapture").addEventListener("click", function() {
-    var filename = this.getAttribute("data-file");
-    if (filename) {
-        window.location.href = "/api/download_capture/" + filename.split("/").pop();
+    var filePath = this.getAttribute("data-file"); // Get stored filename
+    console.log("Download button clicked, file path:", filePath); // ✅ Debugging
+
+    if (!filePath) {
+        alert("No capture file available for download.");
+        return;
     }
+
+    // ✅ Extract only the filename (remove ./captures/)
+    var filename = filePath.replace(/^.*[\\/]/, ""); 
+    console.log("Extracted filename for API call:", filename); // ✅ Debugging
+
+    var url = `/api/v1/pcap/single?StreamName=${encodeURIComponent(filename)}`;
+    console.log("Downloading from URL:", url);
+
+    // Create a hidden link to trigger file download
+    var downloadLink = document.createElement("a");
+    downloadLink.href = url;
+    downloadLink.download = filename;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
 });
+
+
 // Fetch the Switch IP on page load
 fetchSwitchIP();
 

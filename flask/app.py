@@ -2,6 +2,7 @@ import os
 import time
 import re
 import subprocess
+from datetime import datetime 
 from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
@@ -221,7 +222,7 @@ def parse_tcpdump_output(output):
         elif "packets dropped by kernel" in line:
             info["packets_dropped"] = int(line.split()[0])
     return info
-
+'''
 @app.route("/api/capture", methods=["POST"])
 def start_capture():
     global capture_process
@@ -248,14 +249,27 @@ def stop_capture():
         capture_process = None
         return jsonify({"message": "Capture stopped successfully."}), 200
     return jsonify({"error": "No active capture to stop."}), 400
+'''
 
-
-@app.route("/api/download_capture/<filename>")
-def download_capture(filename):
-    file_path = os.path.join(CAPTURE_DIR, filename)
-    if os.path.exists(file_path):
+@app.route("/api/v1/pcap/single", methods=["GET"])
+def download_capture():
+    try:
+        # Get filename from query parameter (?StreamName=Fava_20250124_1323.pcap)
+        filename = request.args.get("StreamName")
+        if not filename:
+            return jsonify({"error": "StreamName parameter is missing"}), 400
+        
+        # Ensure only the filename (no directory traversal)
+        filename = os.path.basename(filename)  
+        file_path = os.path.join(CAPTURE_DIR, filename)
+        print(f"DEBUG: Looking for file at {file_path}")
+        
+        if not os.path.exists(file_path):
+            return jsonify({"error": "File not found"}), 404
         return send_file(file_path, as_attachment=True)
-    return jsonify({"error": "File not found"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 ## FMADIO API ##
 ## Hardcoded filter for M-Plane test
@@ -264,13 +278,14 @@ def start_capture():
     
     global capture_process
     try:
+        print("DEBUG: Received request with params:", request.args)
         interface = request.args.get("interface", "ens3f0")  # Use request.args for GET
         # Automatically assign the capture name
         capture_name = "Fava"
         now = datetime.now() # Get current timestamp
         filename = os.path.join(CAPTURE_DIR, f"{capture_name}_{now.strftime('%Y%m%d_%H%M')}.pcap") # Format filename correctly before starting tcpdump
         response_str = now.strftime("[%a %b %d %H:%M:%S %Y] successfully started capture [{}]").format(capture_name)
-        cmd = ["tcpdump", "-i", interface, "-j", "adapter_unsynced", "-ttt", "-nn", "-s", "9000", "-w", filename, "ip or port 67 or port 68"]
+        cmd = ["tcpdump", "-i", interface, "-ttt", "-nn", "-s", "9000", "-w", filename, "ip or port 67 or port 68"]
         capture_process = subprocess.Popen(cmd)
         socketio.emit("capture_started", {"interface": interface, "file": filename})
         return jsonify({
@@ -278,6 +293,7 @@ def start_capture():
             "file": filename  # Filename in expected format
         }), 200
     except Exception as e:
+        print(e, flush=True)
         return jsonify({"error": str(e)}), 500
 
 @app.route("/sysmaster/capture_stop", methods=["GET"])
