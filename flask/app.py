@@ -239,6 +239,7 @@ def start_capture():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route("/api/stop_capture", methods=["POST"])
 def stop_capture():
     global capture_process
@@ -248,12 +249,46 @@ def stop_capture():
         return jsonify({"message": "Capture stopped successfully."}), 200
     return jsonify({"error": "No active capture to stop."}), 400
 
+
 @app.route("/api/download_capture/<filename>")
 def download_capture(filename):
     file_path = os.path.join(CAPTURE_DIR, filename)
     if os.path.exists(file_path):
         return send_file(file_path, as_attachment=True)
     return jsonify({"error": "File not found"}), 404
+
+## FMADIO API ##
+## Hardcoded filter for M-Plane test
+@app.route("/sysmaster/capture_start", methods=["GET"])
+def start_capture():
+    
+    global capture_process
+    try:
+        interface = request.args.get("interface", "ens3f0")  # Use request.args for GET
+        # Automatically assign the capture name
+        capture_name = "Fava"
+        now = datetime.now() # Get current timestamp
+        filename = os.path.join(CAPTURE_DIR, f"{capture_name}_{now.strftime('%Y%m%d_%H%M')}.pcap") # Format filename correctly before starting tcpdump
+        response_str = now.strftime("[%a %b %d %H:%M:%S %Y] successfully started capture [{}]").format(capture_name)
+        cmd = ["tcpdump", "-i", interface, "-j", "adapter_unsynced", "-ttt", "-nn", "-s", "9000", "-w", filename, "ip or port 67 or port 68"]
+        capture_process = subprocess.Popen(cmd)
+        socketio.emit("capture_started", {"interface": interface, "file": filename})
+        return jsonify({
+            "message": response_str,  # Matches required response format
+            "file": filename  # Filename in expected format
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/sysmaster/capture_stop", methods=["GET"])
+def stop_capture():
+    global capture_process
+    if capture_process:
+        capture_process.terminate()  # Stop tcpdump
+        capture_process = None
+        return jsonify({"message": "Capture stopped successfully."}), 200
+    return jsonify({"error": "No active capture to stop."}), 400
+
 
 if __name__ == "__main__":
     socketio.run(app, host="0.0.0.0", port=5001, allow_unsafe_werkzeug=True)

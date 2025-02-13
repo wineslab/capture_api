@@ -111,14 +111,27 @@ document.getElementById("captureForm").addEventListener("submit", function(event
     var interface = document.getElementById("interface").value;
     var captureCommandDisplay = document.getElementById("captureCommand");
 
-    fetch("/api/capture", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interface: interface })
+    var url = `/sysmaster/capture_start?interface=${encodeURIComponent(interface)}`;
+
+    console.log("Fetching from URL:", url); // ✅ Log request URL
+
+    fetch(url, { method: "GET" })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        // Ensure it's JSON
+        if (response.headers.get("content-type")?.includes("application/json")) {
+            return response.json();
+        } else {
+            throw new Error("Response is not JSON");
+        }
     })
-    .then(response => response.json())
     .then(data => {
+        console.log("Received JSON:", data);  //Log JSON response
         alert(data.message);
+
         socket.emit("capture_started", { interface: interface });
         document.getElementById("downloadCapture").setAttribute("data-file", data.file);
         document.getElementById("downloadCapture").style.display = "block";
@@ -132,10 +145,7 @@ document.getElementById("captureForm").addEventListener("submit", function(event
 
 // Handle stopping packet capture
 document.getElementById("stopCapture").addEventListener("click", function() {
-    fetch("/api/stop_capture", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" }
-    })
+    fetch("/sysmaster/capture_stop", { method: "GET" })
     .then(response => response.json())
     .then(data => {
         alert(data.message);
@@ -156,7 +166,7 @@ socket.on("capture_completed", function(data) {
 document.getElementById("downloadCapture").addEventListener("click", function() {
     var filename = this.getAttribute("data-file");
     if (filename) {
-        window.location.href = "/download_capture/" + filename.split("/").pop();
+        window.location.href = "/api/download_capture/" + filename.split("/").pop();
     }
 });
 // Fetch the Switch IP on page load
