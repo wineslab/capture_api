@@ -127,18 +127,22 @@ document.getElementById("captureForm").addEventListener("submit", function(event
     })
     .then(data => {
         console.log("Received JSON:", data);  //Log JSON response
-        alert(data.message);
+        alert("Status: " + data.Status + "\n" + data.Str);
 
-        var filename = data.file.replace(/^.*[\\/]/, ""); 
-        console.log("Setting download button data-file to:", filename);
-        
-        socket.emit("capture_started", { interface: interface });
-        document.getElementById("downloadCapture").setAttribute("data-file", data.file);
-        document.getElementById("downloadCapture").style.display = "block";
-        document.getElementById("stopCapture").style.display = "inline-block";
-        
-        captureCommandDisplay.textContent = "Command: sudo tcpdump -i " + interface + " -w " + data.file;
-        captureCommandDisplay.style.display = "block";
+        if (data.file) {
+            var filename = data.file.replace(/^.*[\\/]/, ""); 
+            console.log("Setting download button data-file to:", filename);
+            
+            socket.emit("capture_started", { interface: interface });
+            document.getElementById("downloadCapture").setAttribute("data-file", data.file);
+            document.getElementById("downloadCapture").style.display = "block";
+            document.getElementById("stopCapture").style.display = "inline-block";
+            
+            captureCommandDisplay.textContent = "Command: sudo tcpdump -i " + interface + " -w " + data.file;
+            captureCommandDisplay.style.display = "block";
+        } else {
+            console.warn("No file field in response. Capture may not have started correctly.");
+        }
     })
     .catch(error => console.error("Error starting capture:", error));
 });

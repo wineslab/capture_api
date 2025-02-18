@@ -288,10 +288,12 @@ def start_capture():
         cmd = ["tcpdump", "-i", interface, "-ttt", "-nn", "-s", "9000", "-w", filename, "ip or port 67 or port 68"]
         capture_process = subprocess.Popen(cmd)
         socketio.emit("capture_started", {"interface": interface, "file": filename})
+        print({"Status": True, "Str": response_str})  # Check if it's formatted correctly
         return jsonify({
-            "message": response_str,  # Matches required response format
+            "Status": True,  # Matches required response format
+            "Str": response_str,
             "file": filename  # Filename in expected format
-        }), 200
+        }), 200 
     except Exception as e:
         print(e, flush=True)
         return jsonify({"error": str(e)}), 500
